@@ -2,7 +2,9 @@
 
 
 int main() {
-    minesweeperBoard plansza(5,5,HARD);
-    plansza.revealField(2,2);
-    plansza.debug_display();
+    minesweeperBoard plansza(10,10,HARD);
+    MSBoardTextView view(plansza);
+    MSTextController ctrl(plansza,view);
+    plansza.getFieldInfo(1,1);
+    ctrl.play();
 }

@@ -169,7 +169,7 @@ int minesweeperBoard::checkMine(int row, int col) const {
 }
 
 int minesweeperBoard::countMines(int row, int col) const {
-    int counter;
+    int counter = 0;
     if(boardArray[row][col].isRevealed==1 && row>=0 && row<height && col>=0 && col<width) {
         if(row==0) {
             if(col==0 || col==width-1) {
@@ -244,7 +244,7 @@ int minesweeperBoard::countMines(int row, int col) const {
 }
 
 bool minesweeperBoard::hasFlag(int row, int col) const {
-    if(row < 0 || row >= height || col < 0 || col >= width || boardArray[row][col].isRevealed==1 || boardArray[row][col].hasFlag==0) {
+    if(row <= 0 || row >= height || col <= 0 || col >= width || boardArray[row][col].isRevealed==1 || boardArray[row][col].hasFlag==0) {
         return false;
     } else {
         return true;
@@ -253,7 +253,7 @@ bool minesweeperBoard::hasFlag(int row, int col) const {
 
 
 void minesweeperBoard::toggleFlag(int row, int col) {
-    if(row > 0 && row <= height && col > 0 && col<= width && boardArray[row][col].isRevealed==0 && state==RUNNING) {
+    if(row >= 0 && row <= height && col >= 0 && col<= width && boardArray[row][col].isRevealed==0 && state==RUNNING) {
         if(boardArray[row][col].hasFlag==0) {
             boardArray[row][col].hasFlag=1;
         } else {
@@ -264,7 +264,7 @@ void minesweeperBoard::toggleFlag(int row, int col) {
 }
 
 void minesweeperBoard::revealField(int row, int col) {
-    if(row > 0 && row <= height && col > 0 && col<= width && boardArray[row][col].isRevealed==0 && boardArray[row][col].hasFlag==0) {
+    if(row >= 0 && row < height && col >= 0 && col < width && boardArray[row][col].isRevealed==0 && boardArray[row][col].hasFlag==0) {
         if(boardArray[row][col].hasMine==0) {
             boardArray[row][col].isRevealed=1;
         } else {
@@ -294,6 +294,7 @@ void minesweeperBoard::revealField(int row, int col) {
                     boardArray[rngHeight][rngWidth].hasMine = true;
                 }
             } else {
+                std::cout << "no przegrales" << std::endl;
                 state=FINISHED_LOSS;
             }
             boardArray[row][col].isRevealed=1;
@@ -323,12 +324,14 @@ GameState minesweeperBoard::getGameState() const {
         }
     }
     if(count==numOfMines) {
+        std::cout << "no wygrales" << std::endl;
         return FINISHED_WIN;
     }
     return state;
 }
 
 char minesweeperBoard::getFieldInfo(int row, int col) const {
+    char mCount = countMines(row,col);
     if(row < 0 || row >= height || col < 0 || col >= width) {
         return '#';
     }
@@ -342,10 +345,84 @@ char minesweeperBoard::getFieldInfo(int row, int col) const {
         if(boardArray[row][col].hasMine==1) {
             return 'x';
         }
-        if(countMines(row,col)==(-1)) {
-            return ' ';
-        } else {
-           return countMines(row,col); 
+        //std::cout << std::endl << help << std::endl;
+        if(mCount==0) {
+            return '0';
+        } else if(mCount==1) {
+           return '1';
+        } else if(mCount==2) {
+           return '2';
+        } else if(mCount==3) {
+           return '3';
+        } else if(mCount==4) {
+           return '4';
+        } else if(mCount==5) {
+           return '5';
+        } else if(mCount==6) {
+           return '6';
+        } else if(mCount==7) {
+           return '7';
+        } else if(mCount==8) {
+           return '8';
         }
+        return '9';
+    }
+}
+
+MSBoardTextView::MSBoardTextView(minesweeperBoard &board) : msboard(board){
+}
+
+void MSBoardTextView::display() {
+    int height = msboard.getBoardHeight();
+    int width = msboard.getBoardWidth();
+    for(int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            if(j==0) {
+                if(i==0) {
+                    std::cout << "   ";
+                    for(int k = 0; k < width; k++) {
+                        if(k<10) {
+                            std::cout << " " << k << " ";
+                        } else {
+                            std::cout << " " << k;
+                        }
+                    }
+                std::cout << std::endl;
+                }
+                if(i<=9) {
+                    std::cout << i << "  ";
+                } else {
+                    std::cout << i << " ";
+                }
+            }
+            std::cout << "[" << msboard.getFieldInfo(i,j) << "]";
+        }
+        std::cout << std::endl;
+    }
+}
+
+MSTextController::MSTextController(minesweeperBoard &board, MSBoardTextView &view) : msboard(board), msview(view) {
+}
+
+void MSTextController::play() {
+    int state = msboard.getGameState();
+    int row, col;
+    char op;
+    msview.display();
+    while(state==RUNNING) {
+        std::cout << "daj pole i operacje jaka chcesz zrobic" << std::endl;
+        std::cin >> row;
+        std::cin >> col;
+        std::cin >> op;
+        switch(op) {
+            case 'r':
+                msboard.revealField(row,col);
+            break;
+            case 'f':
+                msboard.toggleFlag(row,col);
+            break;
+        }
+        msview.display();
+        state = msboard.getGameState();
     }
 }

@@ -35,3 +35,20 @@ class minesweeperBoard {
         GameState getGameState() const;
         char getFieldInfo(int row, int col) const;
 };
+
+class MSBoardTextView {
+    minesweeperBoard &msboard;
+
+public:
+    MSBoardTextView(minesweeperBoard &board);
+    void display();
+};
+
+class MSTextController {
+    minesweeperBoard &msboard;
+    MSBoardTextView &msview;
+
+public:
+    MSTextController(minesweeperBoard &board, MSBoardTextView &view);
+    void play();
+};
