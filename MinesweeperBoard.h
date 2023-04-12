@@ -1,5 +1,8 @@
 #include "Array2D.h"
 #include <random>
+#include <SFML/Graphics.hpp>
+
+#define TILE_SIZE 16
 
 struct field {
     bool hasMine;
@@ -11,15 +14,14 @@ enum GameMode  { DEBUG, EASY, NORMAL, HARD };
 enum GameState { RUNNING, FINISHED_WIN, FINISHED_LOSS };
 
 class minesweeperBoard {
-    Array2D<field> boardArray {width, height};
     int width;
     int height;
     int numOfMines;
     GameMode mode;
     GameState state;
+    Array2D<field> boardArray {height, width};
 
     public:
-        minesweeperBoard();
         void setDiff(double mineRate);
         minesweeperBoard(int width, int height, GameMode mode);
         void debug_display() const;
@@ -34,6 +36,7 @@ class minesweeperBoard {
         bool isRevealed(int row, int col) const;
         GameState getGameState() const;
         char getFieldInfo(int row, int col) const;
+        void checkNear(int row, int col);
 };
 
 class MSBoardTextView {
@@ -52,3 +55,31 @@ public:
     MSTextController(minesweeperBoard &board, MSBoardTextView &view);
     void play();
 };
+
+class help {
+    bool restart;
+
+    public:
+        help();
+        int getRestartState();
+        void toggleRestart();
+};
+
+class MSSFMLView {
+    int mouseX, mouseY;
+    int winHeight, winWidth;
+    sf::Texture txtVec[15];
+    sf::Sprite sprite[5];
+    double scaleX,scaleY, spriteX, spriteY;
+    minesweeperBoard &msboard;
+    help &msctrl;
+
+    public:
+        MSSFMLView(minesweeperBoard &board, help &msctrl);
+        void draw(sf::RenderWindow &window);
+        void handleClick(sf::Event event);
+        void handleExit(sf::RenderWindow &window, sf::Event event);
+        int getWinHeight();
+        int getWinWidth();
+};
+

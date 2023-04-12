@@ -1,61 +1,34 @@
 #include "MinesweeperBoard.h"
 
 
-minesweeperBoard::minesweeperBoard() {
-    height=15;
-    width=8;
-    boardArray.resize(height, width);
-    for(int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
-            boardArray[i][j].hasMine = false;
-            boardArray[i][j].isRevealed = false;
-            boardArray[i][j].hasFlag = false;
-        }
-    }
-    boardArray[0][0].hasMine = true;
-    boardArray[0][0].isRevealed = false;
-    boardArray[0][0].hasFlag = false;
-            
-    boardArray[1][1].hasMine = false;
-    boardArray[1][1].isRevealed = true;
-    boardArray[1][1].hasFlag = false;
-
-    boardArray[0][2].hasMine = true;
-    boardArray[0][2].isRevealed = false;
-    boardArray[0][2].hasFlag = true;
-}
-
-
 void minesweeperBoard::setDiff(double mineRate) {
     int boardSize = height*width;
     numOfMines = std::ceil(boardSize/mineRate);
-            std::random_device rd;
-            std::mt19937 mt(rd());
-            std::uniform_int_distribution<std::mt19937::result_type> distWidth(0,width-1);
-            std::uniform_int_distribution<std::mt19937::result_type> distHeight(0,height-1);
-            for(int i=0; i < numOfMines; i++) {
-
-                int rngHeight = distHeight(mt);
-                int rngWidth = distWidth(mt);
-
-                if(boardArray[rngHeight][rngWidth].hasMine==false) {
-                    boardArray[rngHeight][rngWidth].hasMine = true;
-                } else {
-                    while(boardArray[rngHeight][rngWidth].hasMine==true) {
-                        rngHeight = distHeight(mt);
-                        rngWidth = distWidth(mt);
-                    }
-                    boardArray[rngHeight][rngWidth].hasMine = true;
-                }
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<std::mt19937::result_type> distWidth(0,width-1);
+    std::uniform_int_distribution<std::mt19937::result_type> distHeight(0,height-1);
+    for(int i=0; i < numOfMines; i++) {
+        int rngHeight = distHeight(mt);
+        int rngWidth = distWidth(mt);
+        if(boardArray[rngHeight][rngWidth].hasMine==false) {
+            boardArray[rngHeight][rngWidth].hasMine = true;
+        } else {
+            while(boardArray[rngHeight][rngWidth].hasMine==true) {
+                rngHeight = distHeight(mt);
+                rngWidth = distWidth(mt);
             }
+            boardArray[rngHeight][rngWidth].hasMine = true;
+        }
+    }
 }
 
 
-minesweeperBoard::minesweeperBoard(int height, int width, GameMode mode) {
+minesweeperBoard::minesweeperBoard(int width, int height, GameMode mode) {
     this->height = height;
     this->width = width;
     this->mode = mode;
-    this->state = RUNNING;
+    state = RUNNING;
     boardArray.resize(height, width);
     for(int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
@@ -69,13 +42,13 @@ minesweeperBoard::minesweeperBoard(int height, int width, GameMode mode) {
         case DEBUG: 
             for(int i = 0; i < height; i++) {
                 for(int j = 0; j < width; j++) {
-                    if(i==0) {
+                    if(j==0) {
                         boardArray[i][j].hasMine = true;
                     }
                     if(i==j) {
                         boardArray[i][j].hasMine = true;
                     }
-                    if(i%2==0 && j==0) {
+                    if(j%2==0 && i==0) {
                         boardArray[i][j].hasMine = true;
                     }
                 }
@@ -243,6 +216,20 @@ int minesweeperBoard::countMines(int row, int col) const {
     }
 }
 
+void minesweeperBoard::checkNear(int row, int col) {
+    if(getFieldInfo(row,col)== '0') {
+        row--;
+        col--;
+        for(int i=0;i<3;i++) {
+            for(int j=0;j<3;j++) {
+                if(getFieldInfo(row+i,col+j)!='#') {
+                    revealField(row+i,col+j);
+                }
+            }
+        }
+    }
+}
+
 bool minesweeperBoard::hasFlag(int row, int col) const {
     if(row <= 0 || row >= height || col <= 0 || col >= width || boardArray[row][col].isRevealed==1 || boardArray[row][col].hasFlag==0) {
         return false;
@@ -267,6 +254,18 @@ void minesweeperBoard::revealField(int row, int col) {
     if(row >= 0 && row < height && col >= 0 && col < width && boardArray[row][col].isRevealed==0 && boardArray[row][col].hasFlag==0) {
         if(boardArray[row][col].hasMine==0) {
             boardArray[row][col].isRevealed=1;
+            int counter=0;
+            for(int i=0;i<height;i++) {
+                for(int j=0;j<width;j++) {
+                    if(boardArray[i][j].isRevealed==1 && boardArray[i][j].hasMine==0) {
+                        counter++;
+                    }
+                }
+            }
+            std::cout << counter << "=" << width << "*" << height << "-" << numOfMines << std::endl;
+            if(counter==(width*height-numOfMines)) {
+                state = FINISHED_WIN;
+            }
         } else {
             int count=0;
             for(int i=0;i < height; i++) {
@@ -294,11 +293,11 @@ void minesweeperBoard::revealField(int row, int col) {
                     boardArray[rngHeight][rngWidth].hasMine = true;
                 }
             } else {
-                std::cout << "no przegrales" << std::endl;
-                state=FINISHED_LOSS;
+                state = FINISHED_LOSS;
             }
             boardArray[row][col].isRevealed=1;
         }
+        checkNear(row,col);
     }
 }
 
@@ -311,27 +310,10 @@ bool minesweeperBoard::isRevealed(int row, int col) const {
 }
 
 GameState minesweeperBoard::getGameState() const {
-    int count;
-    for(int i=0;i<height;i++) {
-        for(int j=0;j<width;j++) {
-            if(boardArray[i][j].isRevealed==0) {
-                if(boardArray[i][j].hasMine==1) {
-                    count++;
-                } else {
-                    return state;
-                }
-            }
-        }
-    }
-    if(count==numOfMines) {
-        std::cout << "no wygrales" << std::endl;
-        return FINISHED_WIN;
-    }
     return state;
 }
 
 char minesweeperBoard::getFieldInfo(int row, int col) const {
-    char mCount = countMines(row,col);
     if(row < 0 || row >= height || col < 0 || col >= width) {
         return '#';
     }
@@ -345,7 +327,7 @@ char minesweeperBoard::getFieldInfo(int row, int col) const {
         if(boardArray[row][col].hasMine==1) {
             return 'x';
         }
-        //std::cout << std::endl << help << std::endl;
+        char mCount = countMines(row,col);
         if(mCount==0) {
             return '0';
         } else if(mCount==1) {
@@ -424,5 +406,155 @@ void MSTextController::play() {
         }
         msview.display();
         state = msboard.getGameState();
+    }
+}
+
+
+MSSFMLView::MSSFMLView(minesweeperBoard &board, help &idk) : msboard(board), msctrl(idk) {
+    winWidth = 800;
+    winHeight = 600;
+    txtVec[0].loadFromFile("txt.png", sf::IntRect(0, 0, 16, 16));
+    txtVec[1].loadFromFile("txt.png", sf::IntRect(16, 0, 16, 16));
+    txtVec[2].loadFromFile("txt.png", sf::IntRect(32, 0, 16, 16));
+    txtVec[3].loadFromFile("txt.png", sf::IntRect(48, 0, 16, 16));
+    txtVec[4].loadFromFile("txt.png", sf::IntRect(0, 16, 16, 16));
+    txtVec[5].loadFromFile("txt.png", sf::IntRect(16, 16, 16, 16));
+    txtVec[6].loadFromFile("txt.png", sf::IntRect(32, 16, 16, 16));
+    txtVec[7].loadFromFile("txt.png", sf::IntRect(48, 16, 16, 16));
+    txtVec[8].loadFromFile("txt.png", sf::IntRect(0, 16, 16, 16));
+    txtVec[9].loadFromFile("txt.png", sf::IntRect(16, 32, 16, 16));
+    txtVec[10].loadFromFile("txt.png", sf::IntRect(32, 32, 16, 16));
+    txtVec[11].loadFromFile("txt.png", sf::IntRect(0, 48, 16, 16));
+    txtVec[12].loadFromFile("txt.png", sf::IntRect(16, 48, 16, 16));
+    txtVec[13].loadFromFile("restart.png");
+    txtVec[14].loadFromFile("win.png");
+    sprite[1].setTexture(txtVec[13]);
+    sprite[2].setTexture(txtVec[14]);
+    sprite[1].setScale(2,2);
+    sprite[2].setScale(2,2);
+    int restartX = (winWidth/2)-(sprite[1].getTexture()->getSize().x);
+    int restartY = (winHeight/2)-(sprite[1].getTexture()->getSize().y);
+    int winX = (winWidth/2)-(sprite[2].getTexture()->getSize().x);
+    int winY = (winHeight/2)-(sprite[2].getTexture()->getSize().y);
+    sprite[1].setPosition(restartX,restartY);
+    sprite[2].setPosition(winX,winY);
+}
+
+
+void MSSFMLView::draw(sf::RenderWindow &window)  {
+    scaleX = winWidth / double((msboard.getBoardWidth()*TILE_SIZE));
+    scaleY = winHeight / double((msboard.getBoardHeight()*TILE_SIZE));
+    spriteX = TILE_SIZE*scaleX;
+    spriteY = TILE_SIZE*scaleY;
+    sprite[0].setScale(scaleX,scaleY);
+    for(int i=0;i<msboard.getBoardHeight();i++) {
+        for(int j=0;j<msboard.getBoardWidth();j++) {
+            switch(msboard.getFieldInfo(i,j)) {
+                case '_':
+                    sprite[0].setTexture(txtVec[9]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case 'F':
+                    sprite[0].setTexture(txtVec[10]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case 'x':
+                    sprite[0].setTexture(txtVec[12]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '0':
+                    sprite[0].setTexture(txtVec[0]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '1':
+                    sprite[0].setTexture(txtVec[1]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '2':
+                    sprite[0].setTexture(txtVec[2]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '3':
+                    sprite[0].setTexture(txtVec[3]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '4':
+                    sprite[0].setTexture(txtVec[4]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '5':
+                    sprite[0].setTexture(txtVec[5]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '6':
+                    sprite[0].setTexture(txtVec[6]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '7':
+                    sprite[0].setTexture(txtVec[7]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+                case '8':
+                    sprite[0].setTexture(txtVec[8]);
+                    sprite[0].setPosition(j*spriteX, i*spriteY);
+                break;
+            }
+            window.draw(sprite[0]);
+        }
+    }
+    if(msboard.getGameState()==2) {
+        window.draw(sprite[1]);
+    }
+    if(msboard.getGameState()==1) {
+        window.draw(sprite[2]);
+    }
+}
+
+void MSSFMLView::handleClick(sf::Event event) {
+    if(event.type == sf::Event::MouseButtonPressed && msboard.getGameState()==RUNNING) {
+        mouseX = (msboard.getBoardWidth()*event.mouseButton.x) / winWidth;
+        mouseY = (msboard.getBoardHeight()*event.mouseButton.y) / winHeight;
+        if(event.mouseButton.button==sf::Mouse::Left) {
+            msboard.revealField(mouseY,mouseX);
+        } else if (event.mouseButton.button==sf::Mouse::Right) {
+            msboard.toggleFlag(mouseY,mouseX);
+        }
+    }
+    if(event.type == sf::Event::KeyPressed && msboard.getGameState()!=RUNNING) {
+        if(event.key.code == sf::Keyboard::R) {
+            std::cout << "Restart" << std::endl;
+            msctrl.toggleRestart();
+            
+        }
+    }
+}
+
+void MSSFMLView::handleExit(sf::RenderWindow &window, sf::Event event) {
+    if (event.type == sf::Event::Closed || msctrl.getRestartState()==1) {
+        window.close();
+    }
+}
+
+int MSSFMLView::getWinHeight() {
+    return winHeight;
+}
+
+int MSSFMLView::getWinWidth() {
+    return winWidth;
+}
+
+help::help() {
+    restart=1;
+}
+
+int help::getRestartState() {
+    return restart;
+}
+
+void help::toggleRestart() {
+    if(restart==1) {
+        restart=0;
+    } else {
+        restart=1;
     }
 }
