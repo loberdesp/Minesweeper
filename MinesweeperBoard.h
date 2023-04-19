@@ -3,6 +3,8 @@
 #include <SFML/Graphics.hpp>
 
 #define TILE_SIZE 16
+#define windowX 800
+#define windowY 600
 
 struct field {
     bool hasMine;
@@ -22,8 +24,8 @@ class minesweeperBoard {
     Array2D<field> boardArray {height, width};
 
     public:
-        void setDiff(double mineRate);
         minesweeperBoard(int width, int height, GameMode mode);
+        void setDiff(double mineRate);
         void debug_display() const;
         int getBoardWidth() const;
         int getBoardHeight() const;
@@ -67,7 +69,6 @@ class help {
 
 class MSSFMLView {
     int mouseX, mouseY;
-    int winHeight, winWidth;
     sf::Texture txtVec[15];
     sf::Sprite sprite[5];
     double scaleX,scaleY, spriteX, spriteY;
@@ -77,9 +78,7 @@ class MSSFMLView {
     public:
         MSSFMLView(minesweeperBoard &board, help &msctrl);
         void draw(sf::RenderWindow &window);
-        void handleClick(sf::Event event);
+        void handleClick(sf::RenderWindow &window, sf::Event event);
         void handleExit(sf::RenderWindow &window, sf::Event event);
-        int getWinHeight();
-        int getWinWidth();
 };
 

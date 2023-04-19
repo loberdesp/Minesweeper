@@ -24,10 +24,7 @@ void minesweeperBoard::setDiff(double mineRate) {
 }
 
 
-minesweeperBoard::minesweeperBoard(int width, int height, GameMode mode) {
-    this->height = height;
-    this->width = width;
-    this->mode = mode;
+minesweeperBoard::minesweeperBoard(int width, int height, GameMode mode): width(width), height(height) {
     state = RUNNING;
     boardArray.resize(height, width);
     for(int i = 0; i < height; i++) {
@@ -262,7 +259,6 @@ void minesweeperBoard::revealField(int row, int col) {
                     }
                 }
             }
-            std::cout << counter << "=" << width << "*" << height << "-" << numOfMines << std::endl;
             if(counter==(width*height-numOfMines)) {
                 state = FINISHED_WIN;
             }
@@ -410,9 +406,7 @@ void MSTextController::play() {
 }
 
 
-MSSFMLView::MSSFMLView(minesweeperBoard &board, help &idk) : msboard(board), msctrl(idk) {
-    winWidth = 800;
-    winHeight = 600;
+MSSFMLView::MSSFMLView(minesweeperBoard &board, help &ctrl) : msboard(board), msctrl(ctrl) {
     txtVec[0].loadFromFile("txt.png", sf::IntRect(0, 0, 16, 16));
     txtVec[1].loadFromFile("txt.png", sf::IntRect(16, 0, 16, 16));
     txtVec[2].loadFromFile("txt.png", sf::IntRect(32, 0, 16, 16));
@@ -432,18 +426,18 @@ MSSFMLView::MSSFMLView(minesweeperBoard &board, help &idk) : msboard(board), msc
     sprite[2].setTexture(txtVec[14]);
     sprite[1].setScale(2,2);
     sprite[2].setScale(2,2);
-    int restartX = (winWidth/2)-(sprite[1].getTexture()->getSize().x);
-    int restartY = (winHeight/2)-(sprite[1].getTexture()->getSize().y);
-    int winX = (winWidth/2)-(sprite[2].getTexture()->getSize().x);
-    int winY = (winHeight/2)-(sprite[2].getTexture()->getSize().y);
+    int restartX = (windowX/2)-(sprite[1].getTexture()->getSize().x);
+    int restartY = (windowY/2)-(sprite[1].getTexture()->getSize().y);
+    int winX = (windowX/2)-(sprite[2].getTexture()->getSize().x);
+    int winY = (windowY/2)-(sprite[2].getTexture()->getSize().y);
     sprite[1].setPosition(restartX,restartY);
     sprite[2].setPosition(winX,winY);
 }
 
 
 void MSSFMLView::draw(sf::RenderWindow &window)  {
-    scaleX = winWidth / double((msboard.getBoardWidth()*TILE_SIZE));
-    scaleY = winHeight / double((msboard.getBoardHeight()*TILE_SIZE));
+    scaleX = windowX / double((msboard.getBoardWidth()*TILE_SIZE));
+    scaleY = windowY / double((msboard.getBoardHeight()*TILE_SIZE));
     spriteX = TILE_SIZE*scaleX;
     spriteY = TILE_SIZE*scaleY;
     sprite[0].setScale(scaleX,scaleY);
@@ -510,10 +504,10 @@ void MSSFMLView::draw(sf::RenderWindow &window)  {
     }
 }
 
-void MSSFMLView::handleClick(sf::Event event) {
+void MSSFMLView::handleClick(sf::RenderWindow &window, sf::Event event) {
     if(event.type == sf::Event::MouseButtonPressed && msboard.getGameState()==RUNNING) {
-        mouseX = (msboard.getBoardWidth()*event.mouseButton.x) / winWidth;
-        mouseY = (msboard.getBoardHeight()*event.mouseButton.y) / winHeight;
+        mouseX = (msboard.getBoardWidth()*event.mouseButton.x) / window.getSize().x;
+        mouseY = (msboard.getBoardHeight()*event.mouseButton.y) / window.getSize().y;
         if(event.mouseButton.button==sf::Mouse::Left) {
             msboard.revealField(mouseY,mouseX);
         } else if (event.mouseButton.button==sf::Mouse::Right) {
@@ -522,7 +516,6 @@ void MSSFMLView::handleClick(sf::Event event) {
     }
     if(event.type == sf::Event::KeyPressed && msboard.getGameState()!=RUNNING) {
         if(event.key.code == sf::Keyboard::R) {
-            std::cout << "Restart" << std::endl;
             msctrl.toggleRestart();
             
         }
@@ -535,13 +528,6 @@ void MSSFMLView::handleExit(sf::RenderWindow &window, sf::Event event) {
     }
 }
 
-int MSSFMLView::getWinHeight() {
-    return winHeight;
-}
-
-int MSSFMLView::getWinWidth() {
-    return winWidth;
-}
 
 help::help() {
     restart=1;
