@@ -46,5 +46,6 @@
 		"memory": "cpp",
 		"memory_resource": "cpp",
 		"random": "cpp"
-	}
+	},
+	"C_Cpp.errorSquiggles": "disabled"
 }

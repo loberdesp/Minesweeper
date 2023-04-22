@@ -1,5 +1,4 @@
-#include "MinesweeperBoard.h"
-
+#include "headers.h"
 
 int main() {    
     help ctrl;
@@ -19,7 +18,7 @@ int main() {
         window.clear();
         view.draw(window);
         window.display();
-        } 
+        }
     }
     while(ctrl.getRestartState()==1);
 }

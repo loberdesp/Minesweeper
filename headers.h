@@ -1,0 +1,9 @@
+#include "Array2D.h"
+#include <random>
+#include <SFML/Graphics.hpp>
+#include "define.h"
+#include "field_enums.h"
+#include "minesweeperBoard.h"
+#include "MSBoardText.h"
+#include "help.h"
+#include "MSSFMLView.h"
